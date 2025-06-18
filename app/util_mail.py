@@ -23,7 +23,7 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-def send_email(to_email, subject, message_body):
+def send_email(name, to_email, subject, message_body):
     from_email = 'nisc.co.in@gmail.com'
     app_password = 'gtdl lscl nnhi jiwa'
 
@@ -33,8 +33,16 @@ def send_email(to_email, subject, message_body):
     msg['To'] = to_email
     msg.add_header('Reply-To', from_email)
 
+    message = f"""
+{message_body}
+
+From,
+{name}
+{to_email}
+"""
+
     # Plain text version (important)
-    text_part = MIMEText(message_body, 'plain')
+    text_part = MIMEText(message, 'plain')
     msg.attach(text_part)
 
     try:

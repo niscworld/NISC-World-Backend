@@ -13,11 +13,12 @@ def send_mail():
     email = data['email']
     subject = data['subject']
     message = data['message']
+    name = data['name']
     if not email or not subject or not message:
         return jsonify({'error': 'Email, subject, and message are required'}), 400
     # Call the utility function to send the email
     try:
-        result = send_mail_util(email, subject, message)
+        result = send_mail_util(name, email, subject, message)
         if not result:
             return jsonify({'error': 'Failed to send email'}), 500
     except Exception as e:
