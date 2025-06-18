@@ -16,3 +16,4 @@ def send_mail():
     # For now, we will just return a success message
     return jsonify({'status': 'success', 'message': f'Email sent to {email} with subject "{subject}"'}), 200
 
+

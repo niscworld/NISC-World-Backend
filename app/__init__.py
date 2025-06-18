@@ -9,7 +9,7 @@ import os
 
 def create_app():
     app = Flask(__name__, instance_relative_config=True)
-    CORS(app)  # Enable CORS for all routes
+    CORS(app, resources={r"/api/*": {"origins": "*"}})  # For dev only — change '*' to allowed origin in production
     # app.config.from_object('config.Config')
     # app.config.from_pyfile('config.py', silent=True)
 
