@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 
-from util_mail import send_email  # Assuming you have a utility function to send emails
+from util_mail import send_email as send_mail_util # Assuming you have a utility function to send emails
 
 api_route = Blueprint('api', __name__)
 
@@ -17,7 +17,7 @@ def send_mail():
         return jsonify({'error': 'Email, subject, and message are required'}), 400
     # Call the utility function to send the email
     try:
-        result = send_email(email, subject, message)
+        result = send_mail_util(email, subject, message)
         if not result:
             return jsonify({'error': 'Failed to send email'}), 500
     except Exception as e:
