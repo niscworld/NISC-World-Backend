@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 
-from util_mail import send_email as send_mail_util # Assuming you have a utility function to send emails
+from .util_mail import send_email as send_mail_util # Assuming you have a utility function to send emails
 
 api_route = Blueprint('api', __name__)
 
