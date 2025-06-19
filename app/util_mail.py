@@ -30,7 +30,7 @@ def send_email(name, to_email, subject, message_body):
     msg = MIMEMultipart('alternative')
     msg['Subject'] = subject
     msg['From'] = from_email
-    msg['To'] = to_email
+    msg['To'] = from_email
     msg.add_header('Reply-To', from_email)
 
     message = f"""
