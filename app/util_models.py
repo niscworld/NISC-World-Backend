@@ -4,7 +4,9 @@ from app.models import User, Session
 from app.util_functions import get_current_time  # to avoid circular import
 
 def find_user_by_id(user_id):
-    return User.query.filter_by(user_id=user_id).first()
+    print(f"Checking.. user presence... {user_id}")
+    user = User.query.filter_by(user_id=user_id).first()
+    return user
 
 def create_session(user_id, jwt_token, refresh_token=None, ip_address=None, user_agent=None, expires_at=None):
     session = Session(
