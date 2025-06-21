@@ -3,6 +3,11 @@ import os
 # RENDER_DB_URL = 'postgresql://srinivascharank_mytasklyprove:YaQZez9J2hZrdqG6Ja7wb9TfLwoCi6EM@dpg-d0or5i6uk2gs73903s60-a/mytasklyprove'
 SUPABASE_SQLALCHEMY_DATABASE_URI = 'postgresql://postgres.ndngdtfmycfggranhjxx:nisc-world-database@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres'
 
+# postgresql://postgres:nisc-world-database@db.ndngdtfmycfggranhjxx.supabase.co:5432/postgres
+# postgresql://postgres.ndngdtfmycfggranhjxx:nisc-world-database@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
+# postgresql://postgres.ndngdtfmycfggranhjxx:nisc-world-database@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres
+# postgresql://postgres.ndngdtfmycfggranhjxx:nisc-world-database@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
+
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 INSTANCE_DIR = os.path.join(BASE_DIR, 'instance')
 DB_PATH = os.path.join(INSTANCE_DIR, 'niscworld.db')
@@ -20,7 +25,7 @@ class Config:
     SITE_URL = "https://nisc-world-backend.onrender.com"
     SECRET_KEY = os.environ.get('SECRET_KEY', 'niscworld-secret')
 
-    if os.environ.get('FLASK_ENV') == 'development':
+    if os.environ.get('FLASK_ENV') == 'development' and False:
         # Use SQLite for development
         SQLALCHEMY_DATABASE_URI = 'sqlite:///' + DB_PATH
     else:
