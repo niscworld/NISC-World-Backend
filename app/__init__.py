@@ -17,7 +17,9 @@ def create_app():
     migrate.init_app(app, db)  # << add this
 
     from .api import api_route
+    from .accounts import Account_routes
 
     app.register_blueprint(api_route, url_prefix='/api')
+    app.register_blueprint(Account_routes, url_prefix='/accounts')
 
     return app
