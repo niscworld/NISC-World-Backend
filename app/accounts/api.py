@@ -7,7 +7,7 @@ from datetime import timedelta
 from config import Config
 from app.utils import find_user_by_id, verify_password, create_session, get_current_time, get_add_delta_to_current_time_for_session, generate_string
 
-api = Blueprint("accounts_api", __name__, url_prefix="/accounts/api")
+api = Blueprint("accounts_api", __name__)
 
 @api.route('/login', methods=['POST'])
 def login():

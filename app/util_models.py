@@ -29,3 +29,4 @@ def revoke_user_sessions(user_id):
 
 def verify_password(user_obj, password):
     return user_obj.check_password(password)
+

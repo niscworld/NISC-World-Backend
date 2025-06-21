@@ -7,6 +7,7 @@ import os
 db = SQLAlchemy()
 migrate = Migrate()
 
+
 def create_app():
     app = Flask(__name__, instance_relative_config=True)
     CORS(app, resources={r"/*": {"origins": "*"}})  # For dev only — change '*' to allowed origin in production
@@ -16,9 +17,11 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)  # << add this
 
+    from .routes import app as app_routes
     from .api import api_route
     from .accounts import Account_routes
 
+    app.register_blueprint(app_routes, url_prefix='/')
     app.register_blueprint(api_route, url_prefix='/api')
     app.register_blueprint(Account_routes, url_prefix='/accounts')
 
