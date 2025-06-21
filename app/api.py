@@ -1,6 +1,14 @@
 from flask import Blueprint, request, jsonify
+from flask import Blueprint, jsonify, request
+from config import Config
 
-from .util_mail import send_email as send_mail_util # Assuming you have a utility function to send emails
+
+
+from .utils import send_email as send_mail_util # Assuming you have a utility function to send emails
+
+
+
+
 
 api_route = Blueprint('api', __name__)
 
@@ -27,5 +35,6 @@ def send_mail():
     # Here you would implement the logic to send the email
     # For now, we will just return a success message
     return jsonify({'status': 'success', 'message': f'Email sent to {email} with subject "{subject}"'}), 200
+
 
 
