@@ -45,11 +45,12 @@ class Session(db.Model):
     jwt_token = db.Column(db.Text, nullable=False)
     refresh_token = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=get_current_time)
-    expires_at = db.Column(db.DateTime, nullable=True)  # Can be null if tokens are self-contained
-
-    revoked = db.Column(db.Boolean, default=False)
+    expires_at = db.Column(db.DateTime)  # Can be null if tokens are self-contained
 
     ip_address = db.Column(db.String(100))
     user_agent = db.Column(db.String(256))
 
     user = db.relationship('User', backref='sessions')
+
+    def __repr__(self):
+        return f"<Session user_id={self.user_id} ip_address={self.ip_address}>"

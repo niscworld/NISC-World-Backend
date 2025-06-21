@@ -25,4 +25,10 @@ def create_app():
     app.register_blueprint(api_route, url_prefix='/api')
     app.register_blueprint(Account_routes, url_prefix='/accounts')
 
+
+    @app.before_request
+    def call_frequent_function():
+        from .utils import frequentCallerFunction
+        frequentCallerFunction(app)
+
     return app
