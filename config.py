@@ -14,8 +14,8 @@ DB_PATH = os.path.join(INSTANCE_DIR, 'niscworld.db')
 
 os.environ.setdefault('DATABASE_URL', SUPABASE_SQLALCHEMY_DATABASE_URI)
 
-if not os.environ.get('FLASK_ENV'):
-    os.environ['FLASK_ENV'] = 'development'
+# if not os.environ.get('FLASK_ENV'):
+#     os.environ['FLASK_ENV'] = 'development'
 
 # Make sure instance folder exists
 if not os.path.exists(INSTANCE_DIR):
