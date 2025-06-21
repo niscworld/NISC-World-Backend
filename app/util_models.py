@@ -2,7 +2,7 @@
 from flask import jsonify
 from app import db
 import jwt
-from app.models import User, Session
+from app.models import User, Session, Profile, Internships
 from config import Config, GeneralSettings
 from app.util_functions import get_current_time, get_add_delta_to_current_time_for_session  # to avoid circular import
 
@@ -10,6 +10,11 @@ def find_user_by_id(user_id):
     print(f"Checking.. user presence... {user_id}")
     user = User.query.filter_by(user_id=user_id).first()
     return user
+
+def get_user_profile(user_id):
+    if not user_id:
+        return None
+    return Profile.query.filter_by(user_id=user_id).first()
 
 def create_session(user_id, jwt_token, refresh_token=None, ip_address=None, user_agent=None, expires_at=None):
     session = Session(
@@ -91,3 +96,29 @@ def delete_session(user_id, jwt_token):
 def verify_password(user_obj, password):
     return user_obj.check_password(password)
 
+
+def create_internship(title, description, department, duration, location, stipend):
+    if not title:
+        return jsonify({'message': 'Title is required'}), 400
+
+    try:
+        internship = Internships(
+            title=title,
+            description=description,
+            department=department,
+            duration=duration,
+            location=location,
+            stipend=stipend,
+        )
+
+        db.session.add(internship)
+        db.session.commit()
+
+        return jsonify({
+            'message': 'Internship created successfully',
+            'code': internship.code
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': f'Error creating internship: {str(e)}'}), 500

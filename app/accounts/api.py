@@ -1,11 +1,11 @@
 # app/accounts/api.py
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, session
 from app.models import User
 import jwt
 from datetime import timedelta
 from config import Config, GeneralSettings
-from app.utils import find_user_by_id, verify_password, create_session, get_current_time, get_add_delta_to_current_time_for_session, generate_string, revoke_session, delete_session
+from app.utils import find_user_by_id, verify_password, create_session, get_current_time, get_add_delta_to_current_time_for_session, generate_string, revoke_session, delete_session, get_user_profile
 
 api = Blueprint("accounts_api", __name__)
 
@@ -40,6 +40,8 @@ def login():
     ip = request.remote_addr
     ua = request.headers.get('User-Agent')
 
+    profile = get_user_profile(user.user_id)
+
     # ✅ Track session
     create_session(
         user_id=user.user_id,
@@ -56,6 +58,9 @@ def login():
         "token": token,
         "refresh_token": refresh_token,
         "user": user.user_id,
+        "fullname": profile.fullname,
+        "email": profile.email,
+        "position": profile.position,
         "expires_at": expiry_datetime.isoformat()  # 💡 Frontend can parse this ISO string
     }), 200
 
@@ -82,6 +87,7 @@ def logout():
     data = request.get_json()
     user_id = data.get('user_id')
     jwt_token = data.get('jwt_token')
+
 
     if not user_id or not jwt_token:
         return jsonify({"message": "Missing user_id or token"}), 400

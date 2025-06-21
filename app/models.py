@@ -2,7 +2,7 @@
 
 from app import db
 from werkzeug.security import generate_password_hash, check_password_hash
-from app.utils import get_current_time  # IST timestamp
+from app.utils import get_current_time, generate_string
 from datetime import timedelta
 
 
@@ -29,7 +29,7 @@ class Profile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.String(64), db.ForeignKey('users.user_id'), nullable=False, unique=True)
     fullname = db.Column(db.String(120))
-    email = db.Column(db.String(120), unique=True)
+    email = db.Column(db.String(120), nullable=True)
     position = db.Column(db.String(120))
 
     user = db.relationship('User', backref=db.backref('profile', uselist=False))
@@ -54,3 +54,30 @@ class Session(db.Model):
 
     def __repr__(self):
         return f"<Session user_id={self.user_id} ip_address={self.ip_address}>"
+
+class Internships(db.Model):
+    __tablename__ = 'internships'
+
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(64), unique=True, nullable=False, default=generate_string)  # ✅ Must be unique & not nullable
+    title = db.Column(db.String(150), nullable=False)
+    description = db.Column(db.Text)
+    department = db.Column(db.String(100))
+    duration = db.Column(db.String(50))
+    location = db.Column(db.String(100))
+    stipend = db.Column(db.String(50))
+    posted_on = db.Column(db.DateTime, default=get_current_time)
+    is_visible = db.Column(db.Boolean, default=True)
+
+    applicants = db.relationship('InternshipApply', backref='internship', lazy=True)
+
+class InternshipApply(db.Model):
+    __tablename__ = 'internship_apply'
+
+    id = db.Column(db.Integer, primary_key=True)
+    fullname = db.Column(db.String(120), nullable=False)
+    email = db.Column(db.String(120))
+    resume_url = db.Column(db.String(300), nullable=True)
+    applied_on = db.Column(db.DateTime, default=get_current_time)
+
+    internship_code = db.Column(db.String(64), db.ForeignKey('internships.code'), nullable=False)
