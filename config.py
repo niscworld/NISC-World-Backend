@@ -23,7 +23,7 @@ if not os.path.exists(INSTANCE_DIR):
 
 class Config:
     SITE_URL = "https://nisc-world-backend.onrender.com"
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'niscworld-secret')
+    SECRET_KEY = os.environ.get('SECRET_KEY', 'niscworld-secret-key')
 
     if os.environ.get('FLASK_ENV') == 'development':
         # Use SQLite for development
