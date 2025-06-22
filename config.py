@@ -40,7 +40,14 @@ class Config:
 
 class GeneralSettings:
     JWTExpireMinutes = 60
+    MFA_OTP_EXPIRE_DURATION = 5 # Minutes
+    FROM_EMAIL = 'nisc.co.in@gmail.com'
+    MAIL_PASS_KEY = 'gtdl lscl nnhi jiwa'
 
+    MAIL_END_NOTE = """
+    Note: If you did not request this email or believe it was sent to you by mistake, please disregard it. 
+    If you continue to receive such messages in error, please contact our support team.
+    """
 
 class ThreadSettings:
     NewSessionDeleteThread = 15

@@ -5,7 +5,7 @@ from app.models import User
 import jwt
 from datetime import timedelta
 from config import Config, GeneralSettings
-from app.utils import find_user_by_id, verify_password, create_session, get_current_time, get_add_delta_to_current_time_for_session, generate_string, revoke_session, delete_session, get_user_profile
+from app.utils import find_user_by_id, verify_password, create_session, get_current_time, get_add_delta_to_current_time_for_session, generate_string, revoke_session, delete_session, get_user_profile, create_mfa_entry, send_otp_email, verify_mfa_otp
 
 api = Blueprint("accounts_api", __name__)
 
@@ -101,3 +101,35 @@ def logout():
     except Exception as e:
         print(f"[LOGOUT ERROR] {e}")
         return jsonify({"message": "Internal server error"}), 500
+
+
+
+
+@api.route('/send-otp', methods=['POST'])
+def send_otp():
+    data = request.get_json()
+    user = data.get('user')
+    name = data.get('name', 'User')
+    verify_for = data.get('verify_for')
+
+    if not user or not verify_for:
+        return jsonify({'message': 'Missing email or verification type'}), 400
+
+    result = create_mfa_entry(user=user, verify_for=verify_for)
+
+    if result.get('success'):
+        otp = result['otp']
+        if send_otp_email(name=name, to_email=user, otp=otp, purpose=verify_for):
+            return jsonify({'message': 'OTP sent successfully'}), 200
+        return jsonify({'message': 'Failed to send OTP email'}), 500
+    return jsonify({'message': result.get('message', 'Failed to create OTP')}), 500
+
+@api.route('/verify-otp', methods=['POST'])
+def verify_otp():
+    data = request.get_json()
+    user = data.get('user')
+    otp = data.get('otp')
+    verify_for = data.get('verify_for')
+
+    return verify_mfa_otp(user, otp, verify_for)
+

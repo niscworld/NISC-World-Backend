@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import random
 import pytz
 import uuid
 
@@ -51,3 +52,35 @@ def still_has_time(dt_to_compare):
 
 def generate_string():
     return str(uuid.uuid4())[:8]
+
+def generate_otp(length=6):
+    return ''.join(str(random.randint(0, 9)) for _ in range(length))
+
+def generate_username(role):
+    role = role.strip().lower()  # Normalize input
+
+    # Role to type mapping
+    if role in ['intern', 'trainee']:
+        user_type = 'I'
+    elif role in ['coe', 'cto', 'cfo', 'chro', 'dod', 'dot', 'dos']:
+        user_type = 'A'
+    elif role in ['user', 'client']:
+        user_type = 'U'
+    elif role in ['employee', 'staff']:
+        user_type = 'E'
+    elif role == 'owner':
+        user_type = 'O'
+    else:
+        raise ValueError(f"Invalid role: {role}")
+
+    # Fetch or create the sequence row
+    from app.models import UserNameGenerationSequence
+    sequence = UserNameGenerationSequence.query.filter_by(type=user_type).first()
+    if not sequence:
+        return None
+
+    # Generate the username
+    username = sequence.generate_username()
+
+    return username
+

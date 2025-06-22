@@ -33,7 +33,7 @@ def create_user():
     if not all([user_id, password, fullname, position]):
         return jsonify({'message': 'Missing required fields'}), 400
 
-    if User.query.get(user_id) or Profile.query.filter_by(email=email).first():
+    if User.query.get(user_id):
         return jsonify({'message': 'User ID or Email already exists'}), 409
 
     try:
