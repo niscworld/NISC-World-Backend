@@ -73,7 +73,7 @@ class Internships(db.Model):
     can_join = db.Column(db.Boolean, default=True)
 
     # ✅ HR taken from Profile
-    hr_profile_id = db.Column(db.Integer, db.ForeignKey('profiles.user_id'), nullable=True)
+    hr_profile_id = db.Column(db.String(64), db.ForeignKey('profiles.user_id'), nullable=True)
     hr = db.relationship('Profile', backref='internships_posted', foreign_keys=[hr_profile_id])
 
     applicants = db.relationship('InternshipApply', backref='internship', lazy=True)
