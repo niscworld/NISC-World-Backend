@@ -62,7 +62,7 @@ def generate_username(role):
     # Role to type mapping
     if role in ['intern', 'trainee']:
         user_type = 'I'
-    elif role in ['coe', 'cto', 'cfo', 'chro', 'dod', 'dot', 'dos']:
+    elif role in ['admin', 'coe', 'cto', 'cfo', 'chro', 'dod', 'dot', 'dos', 'hr']:
         user_type = 'A'
     elif role in ['user', 'client']:
         user_type = 'U'
