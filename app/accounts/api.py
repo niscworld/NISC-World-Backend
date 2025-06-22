@@ -1,7 +1,7 @@
 # app/accounts/api.py
 
 from flask import Blueprint, jsonify, request, session
-from app.models import User
+from app.models import User, Profile, db
 import jwt
 from datetime import timedelta
 from config import Config, GeneralSettings
@@ -133,3 +133,63 @@ def verify_otp():
 
     return verify_mfa_otp(user, otp, verify_for)
 
+
+
+
+
+
+
+
+
+
+@api.route('/view-profile', methods=['POST'])
+def view_profile():
+    data = request.get_json()
+    user_id = data.get('user_id')
+
+    if not user_id:
+        return jsonify({'message': 'User ID is required'}), 400
+
+    profile = Profile.query.filter_by(user_id=user_id).first()
+
+    if not profile:
+        return jsonify({'message': 'Profile not found'}), 404
+
+    return jsonify({
+        'user_id': profile.user_id,
+        'fullname': profile.fullname,
+        'email': profile.email,
+        'position': profile.position
+    }), 200
+
+@api.route('/edit-profile', methods=['PUT'])
+def edit_profile():
+    data = request.json
+    profile = Profile.query.filter_by(user_id=data.get('user_id')).first()
+    if profile:
+        profile.fullname = data.get('fullname')
+        profile.email = data.get('email')
+        profile.position = data.get('position')
+        db.session.commit()
+        return jsonify({'message': 'Profile updated'})
+    return jsonify({'message': 'Profile not found'}), 404
+
+
+@api.route('/change-password', methods=['PUT'])
+def change_password():
+    data = request.json
+    user_id = data.get('user_id')
+    old_password = data.get('old_password')
+    new_password = data.get('new_password')
+
+    user = User.query.filter_by(user_id=user_id).first()
+
+    if not user:
+        return jsonify({'message': 'User not found'}), 404
+
+    if not user.check_password(old_password):
+        return jsonify({'message': 'Old password is incorrect'}), 401
+
+    user.set_password(new_password)
+    db.session.commit()
+    return jsonify({'message': 'Password updated successfully'}), 200
