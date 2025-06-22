@@ -28,7 +28,7 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     with op.batch_alter_table('internships', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('hr_profile_id', sa.Integer(), nullable=True))
+        batch_op.add_column(sa.Column('hr_profile_id', sa.String(length=64), nullable=True))
         batch_op.create_foreign_key("hr", 'profiles', ['hr_profile_id'], ['user_id'])
 
     # ### end Alembic commands ###
