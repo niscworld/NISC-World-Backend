@@ -39,7 +39,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 class GeneralSettings:
-    JWTExpireMinutes = 60
+    JWTExpireMinutes = 60 
     MFA_OTP_EXPIRE_DURATION = 5 # Minutes
     FROM_EMAIL = 'nisc.co.in@gmail.com'
     MAIL_PASS_KEY = 'gtdl lscl nnhi jiwa'
