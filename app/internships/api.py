@@ -34,7 +34,6 @@ def get_internships():
 
 
 
-
 @api.route('/apply-internship', methods=['POST'])
 def apply_internship():
     data = request.get_json()
@@ -77,11 +76,37 @@ def apply_internship():
         db.session.add(application)
         db.session.commit()
 
-        return jsonify({'message': 'Application submitted successfully.'}), 201
+        # ✅ Send Thank You Email
+        subject = "✅ Thank You for Applying - Internship at NISC World"
+
+        body = f"""
+Hi {fullname},
+
+Thank you for applying for the internship opportunity: **{internship.title}** at NISC World.
+
+We have received your application and our team will review it shortly.  
+If selected, you will be contacted via this email address ({email}) with the next steps.
+
+You can always reach out to us if you have any questions.
+
+Best regards,  
+HR Team  
+NISC World
+
+{GeneralSettings.MAIL_END_NOTE}
+"""
+
+        send_status = send_email_to(fullname, email, subject, body)
+
+        return jsonify({
+            'message': 'Application submitted successfully.',
+            'email_sent': send_status
+        }), 201
 
     except Exception as e:
         db.session.rollback()
         return jsonify({'message': f'Server error: {str(e)}'}), 500
+
 
 
 
@@ -228,3 +253,43 @@ HR Team
         'message': '❌ Applicant rejected and application removed',
         'email_sent': send_status
     }), 200
+
+
+
+
+@api.route('/view-interns', methods=['GET'])
+def view_interns():
+    interns = (
+        db.session.query(Interns, Profile, Internships)
+        .join(Profile, Profile.user_id == Interns.user_id)
+        .join(Internships, Internships.code == Interns.internship_code)
+        .all()
+    )
+
+    result = []
+    for intern, profile, internship in interns:
+        result.append({
+            'user_id': intern.user_id,
+            'fullname': profile.fullname,
+            'email': profile.email,
+            'internship_title': internship.title,
+            'internship_code': internship.code,
+            'completion_status': intern.completion_status,
+        })
+
+    return jsonify(result), 200
+
+@api.route('/send-message-to-intern', methods=['POST'])
+def send_message_to_intern():
+    data = request.get_json()
+    email = data.get('email')
+    subject = data.get('subject', '').strip()
+    body = data.get('body', '').strip()
+
+    if not email or not subject or not body:
+        return jsonify({'message': 'Missing email, subject, or body'}), 400
+
+    send_status = send_email_to("Intern", email, subject, body)
+
+    return jsonify({'message': '📩 Message sent', 'email_sent': send_status}), 200
+

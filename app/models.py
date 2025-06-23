@@ -116,7 +116,7 @@ class MFAVerification(db.Model):
     user = db.Column(db.String(150), nullable=False)  # Can store user_id, email, etc.
     key = db.Column(db.String(10), nullable=False)  # OTP or verification code
 
-    verify_for = db.Column(db.String(50), nullable=False)  # LOGIN, InternApply, etc.
+    verify_for = db.Column(db.String(250), nullable=False)  # LOGIN, InternApply, etc.
     created_at = db.Column(db.DateTime, default=get_current_time)
     expires_at = db.Column(db.DateTime, nullable=False)
 
