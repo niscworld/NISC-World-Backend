@@ -28,7 +28,9 @@ From,
     msg.attach(text_part)
 
     try:
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+        with smtplib.SMTP('smtp.gmail.com', 587) as server:
+            server.ehlo()
+            server.starttls()
             server.login(from_email, app_password)
             server.send_message(msg)
         return True
@@ -71,7 +73,7 @@ Your One-Time Password (OTP) for {purpose} is:
 
 🔐 OTP: {otp}
 
-This code will expire shortly. Please do not share it with anyone.
+This code will expire in 15 Minutes. Please do not share it with anyone.
 
 Thank you,
 NISC Security Team
