@@ -167,3 +167,64 @@ HR Team
         'username': username,
         'email_sent': send_status
     }), 200
+
+
+@api.route('/reject-internship', methods=['POST'])
+def reject_internship():
+    data = request.get_json()
+    email = data.get('email')
+    internship_code = data.get('internship_code')
+    message_from_hr = data.get('message', '').strip()  # ✅ Optional custom message
+
+    if not email or not internship_code:
+        return jsonify({'message': 'Missing email or internship_code'}), 400
+
+    # ✅ Step 1: Check application exists
+    application = InternshipApply.query.filter_by(email=email, internship_code=internship_code).first()
+    if not application:
+        return jsonify({'message': 'Application not found'}), 404
+
+    # ✅ Step 2: Check internship exists
+    internship = Internships.query.filter_by(code=internship_code).first()
+    if not internship:
+        return jsonify({'message': 'Internship not found'}), 404
+
+    # ✅ Step 3: Delete or mark application as rejected
+    db.session.delete(application)
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': f'Error updating data: {str(e)}'}), 500
+
+    # ✅ Step 4: Send rejection email
+    subject = "📩 Internship Application Update - NISC World"
+
+    body = f"""
+Hi {application.fullname},
+
+Thank you for applying for the internship position: **{internship.title}**.
+
+We appreciate the time and effort you put into your application. After careful consideration, we regret to inform you that your application has not been selected for this internship round.
+"""
+
+    if message_from_hr:
+        body += f"\n📩 Message from HR:\n{message_from_hr}\n"
+
+    body += f"""
+
+We encourage you to apply for future opportunities with us.
+
+Best regards,  
+HR Team
+
+{GeneralSettings.MAIL_END_NOTE}
+"""
+
+    send_status = send_email_to(application.fullname, email, subject, body)
+
+    return jsonify({
+        'message': '❌ Applicant rejected and application removed',
+        'email_sent': send_status
+    }), 200

@@ -40,7 +40,7 @@ class Config:
 
 class GeneralSettings:
     JWTExpireMinutes = 60 
-    MFA_OTP_EXPIRE_DURATION = 5 # Minutes
+    MFA_OTP_EXPIRE_DURATION = 15 # Minutes
     FROM_EMAIL = 'nisc.co.in@gmail.com'
     MAIL_PASS_KEY = 'gtdl lscl nnhi jiwa'
 
@@ -51,6 +51,6 @@ class GeneralSettings:
 
 class ThreadSettings:
     NewSessionDeleteThread = 15
-
+    MFACleanupThread = 10
 
 

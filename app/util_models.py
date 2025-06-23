@@ -2,7 +2,7 @@
 from flask import jsonify
 from app import db
 import jwt
-from app.models import User, Session, Profile, Internships
+from app.models import User, Session, Profile, Internships, MFAVerification
 from config import Config, GeneralSettings
 from app.util_functions import get_current_time, get_add_delta_to_current_time_for_session  # to avoid circular import
 
@@ -81,6 +81,25 @@ def delete_expired_sessions():
     for session in expired_sessions:
         print(session)
         db.session.delete(session)
+
+    db.session.commit()
+
+def delete_expired_mfa_entries():
+    """
+    Deletes MFA verification records where `expires_at` has passed.
+    """
+    now = get_current_time()
+
+    expired_mfa_records = MFAVerification.query.filter(
+        MFAVerification.expires_at < now,
+        MFAVerification.is_verified == True  # Optional: Only delete unverified
+    ).all()
+
+    print(f"🧹 Cleaning up {len(expired_mfa_records)} expired MFA record(s)...")
+
+    for record in expired_mfa_records:
+        print(record)
+        db.session.delete(record)
 
     db.session.commit()
 
