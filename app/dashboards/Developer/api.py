@@ -42,7 +42,7 @@ def create_user():
         if User.query.get(user_id) or (email and User.query.filter_by(email=email).first()):
             return jsonify({'message': 'User ID or Email already exists'}), 409
 
-        new_user = User(user_id=user_id)
+        new_user = User(user_id=user_id, is_active=True)
         new_user.set_password(password)
         db.session.add(new_user)
         db.session.flush()
