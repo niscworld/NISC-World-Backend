@@ -84,6 +84,7 @@ def refresh_token():
 
 @api.route('/logout', methods=['POST'])
 def logout():
+    print("Accessing ",request.path)
     data = request.get_json()
     user_id = data.get('user_id')
     jwt_token = data.get('jwt_token')

@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
 from app.models import User, Profile, Interns, InternshipApply, Internships, db
-from app.utils import generate_string, generate_username, send_email_to, get_current_time
+from app.utils import generate_string, generate_username, send_email_to, get_current_time, verify_dashboard_access
 from werkzeug.security import generate_password_hash
 from config import GeneralSettings
 
@@ -272,7 +272,8 @@ HR Team
 
 
 
-@api.route('/view-interns', methods=['GET'])
+@api.route('/view-interns', methods=['GET', 'POST'])
+@verify_dashboard_access
 def view_interns():
     interns = (
         db.session.query(Interns, Profile, Internships)

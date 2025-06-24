@@ -1,10 +1,12 @@
 from flask import Blueprint, jsonify, request
 from app.models import db, User, Profile
 from app.util_models import create_internship
+from app.util_wraps import verify_dashboard_access
 
 api = Blueprint("api", __name__)
 
 @api.route('/view-users', methods=["POST"])
+@verify_dashboard_access
 def view_users():
     profiles = Profile.query.all()
 
@@ -21,6 +23,7 @@ def view_users():
 
 
 @api.route('/create-user', methods=["POST"])
+@verify_dashboard_access
 def create_user():
     data = request.get_json()
     password = data.get('password')
@@ -65,6 +68,7 @@ def create_user():
 
 
 @api.route('/create-internship', methods=['POST'])
+@verify_dashboard_access
 def createInternship():
     data = request.get_json()
 

@@ -1,11 +1,13 @@
 from flask import Blueprint, jsonify, request
 from app.models import db, InternshipApply, Internships
 from app.util_models import create_internship
+from app.util_wraps import verify_dashboard_access
 
 api = Blueprint("api", __name__)
 
 
 @api.route('view-applicants', methods=['POST'])
+@verify_dashboard_access
 def view_applicants_grouped():
     try:
         applications = InternshipApply.query.order_by(InternshipApply.applied_on.desc()).all()

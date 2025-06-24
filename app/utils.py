@@ -14,6 +14,28 @@ last_cleanup_run_time = None
 # 🕒 Global timestamp to track last MFA cleanup
 last_mfa_cleanup_run_time = None
 
+def whoami(user_id, role, token):
+    # Check user's actual role
+    if not token or not user_id or not role:
+        return jsonify({'success': False, 'error': 'Missing token, user_id, or role'}), 400
+
+    # Check for session
+    session = Session.query.filter_by(user_id=user_id, jwt_token=token).first()
+
+    if not session:
+        return jsonify({'success': False, 'error': 'Invalid token'}), 401
+
+    if session.expires_at and session.expires_at < get_current_time():
+        return jsonify({'success': False, 'error': 'Token expired'}), 401
+
+    profile = Profile.query.filter_by(user_id=user_id).first()
+    if not profile:
+        return jsonify({'success': False, 'error': 'User not found'}), 404
+
+    if profile.position != role:
+        return jsonify({'success': False, 'error': 'Role mismatch', 'correct_position': profile.position}), 403
+    return jsonify({'success': True,})
+
 
 
 # ✅ Frequent hook to call per-request
