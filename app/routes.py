@@ -1,4 +1,4 @@
-from flask import Blueprint
+from flask import Blueprint, jsonify
 
 app = Blueprint("app", __name__)
 
@@ -8,6 +8,11 @@ def home():
     <h1>Welcome to NAKSH INNOVATIVE SOLUTIONS CONSULTANCY</h1>
     <p>Visit our website: <a href='https://www.nisc.co.in' target='_blank'>nisc.co.in</a></p>
     """
+
+
+@app.route("/is_server_on")
+def is_server_on():
+    return jsonify(success=True)
 
 # This will catch any undefined routes if registered at app level
 @app.app_errorhandler(404)
