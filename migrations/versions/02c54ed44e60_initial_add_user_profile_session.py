@@ -32,7 +32,7 @@ def upgrade():
     sa.Column('position', sa.String(length=120), nullable=True),
     sa.ForeignKeyConstraint(['user_id'], ['users.user_id'], ),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('email'),
+    # sa.UniqueConstraint('email'),
     sa.UniqueConstraint('user_id')
     )
     op.create_table('sessions',

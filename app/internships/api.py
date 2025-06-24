@@ -113,11 +113,13 @@ NISC World
 
 @api.route('/accept-internship', methods=['POST'])
 def accept_internship():
+    print("Accepting...1")
     data = request.get_json()
     email = data.get('email')
     internship_code = data.get('internship_code')
     message_from_hr = data.get('message', '').strip()  # ✅ Optional custom message
 
+    print("Accepting...2")
     if not email or not internship_code:
         return jsonify({'message': 'Missing email or internship_code'}), 400
 
@@ -126,37 +128,48 @@ def accept_internship():
     if not application:
         return jsonify({'message': 'Application not found'}), 404
 
+    print("Accepting...3")
     # ✅ Step 2: Check internship exists
     internship = Internships.query.filter_by(code=internship_code).first()
     if not internship:
         return jsonify({'message': 'Internship not found'}), 404
 
+    print("Accepting...4")
     # ✅ Step 3: Generate username and password
     username = generate_username('intern')
     raw_password = generate_string()
     password_hash = generate_password_hash(raw_password)
 
+    print("Accepting...5")
     # ✅ Step 4: Create User
     new_user = User(user_id=username, password_hash=password_hash, is_active=True)
     db.session.add(new_user)
 
+    print("Accepting...6")
     # ✅ Step 5: Create Profile
     profile = Profile(user_id=username, fullname=application.fullname, email=email, position='Intern')
     db.session.add(profile)
 
+    print("Accepting...7")
     # ✅ Step 6: Add to Interns Table
     intern = Interns(user_id=username, internship_code=internship_code, completion_status='ongoing')
     db.session.add(intern)
 
+    print("Accepting...8")
     # ✅ Step 7: Remove or mark application (optional - here marking complete)
     db.session.delete(application)
 
+    print("Accepting...9")
     # ✅ Step 8: Commit changes
     try:
+        print("Accepting...10")
         db.session.commit()
     except Exception as e:
+        print("Accepting...11")
+        print(e)
         db.session.rollback()
         return jsonify({'message': f'Error saving data: {str(e)}'}), 500
+    print("Accepting...12")
 
     # ✅ Step 9: Send email with credentials + custom message
     subject = "🎉 Internship Accepted - Login Credentials - NISC World"
@@ -185,8 +198,10 @@ HR Team
 {GeneralSettings.MAIL_END_NOTE}
 """
 
+    print("Accepting...13")
     send_status = send_email_to(application.fullname, email, subject, body)
 
+    print("Accepting...14")
     return jsonify({
         'message': '✅ Applicant accepted and user created',
         'username': username,

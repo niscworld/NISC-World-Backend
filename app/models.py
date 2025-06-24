@@ -31,8 +31,9 @@ class Profile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.String(64), db.ForeignKey('users.user_id'), nullable=False, unique=True)
     fullname = db.Column(db.String(120))
-    email = db.Column(db.String(120), nullable=True, default=None)
+    email = db.Column(db.String(120), nullable=True, default=None, unique=False)
     position = db.Column(db.String(120))
+    gender = db.Column(db.String(20))
 
     user = db.relationship('User', backref=db.backref('profile', uselist=False))
 

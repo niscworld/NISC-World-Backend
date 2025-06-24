@@ -25,11 +25,12 @@ class Config:
     SITE_URL = "https://nisc-world-backend.onrender.com"
     SECRET_KEY = os.environ.get('SECRET_KEY', 'niscworld-secret-key')
 
-    if os.environ.get('FLASK_ENV') == 'development':
+    if os.environ.get('FLASK_ENV') == 'development' and False:
         # Use SQLite for development
         print("Local Database Accessing...")
         SQLALCHEMY_DATABASE_URI = 'sqlite:///' + DB_PATH
     else:
+        print("Using Supabase Database")
         # Use the RENDER_DB_URL for production or deployment
         SQLALCHEMY_DATABASE_URI = os.environ.get(
             'DATABASE_URL',
