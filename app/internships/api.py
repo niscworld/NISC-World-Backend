@@ -275,12 +275,22 @@ HR Team
 @api.route('/view-interns', methods=['GET', 'POST'])
 @verify_dashboard_access
 def view_interns():
-    interns = (
+    internship_code = None
+
+    if request.method == 'POST':
+        data = request.get_json()
+        internship_code = data.get('internship_code')
+
+    query = (
         db.session.query(Interns, Profile, Internships)
         .join(Profile, Profile.user_id == Interns.user_id)
         .join(Internships, Internships.code == Interns.internship_code)
-        .all()
     )
+
+    if internship_code:
+        query = query.filter(Interns.internship_code == internship_code)
+
+    interns = query.all()
 
     result = []
     for intern, profile, internship in interns:
@@ -294,6 +304,7 @@ def view_interns():
         })
 
     return jsonify(result), 200
+
 
 @api.route('/send-message-to-intern', methods=['POST'])
 def send_message_to_intern():
