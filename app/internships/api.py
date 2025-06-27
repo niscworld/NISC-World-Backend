@@ -320,3 +320,40 @@ def send_message_to_intern():
 
     return jsonify({'message': '📩 Message sent', 'email_sent': send_status}), 200
 
+
+
+
+
+@api.route('/view-my-internship', methods=['POST'])
+def view_my_internship():
+    data = request.get_json()
+    user_id = data.get('user_id')
+
+    if not user_id:
+        return jsonify({'success': False, 'message': 'User ID missing'}), 400
+
+    internship_record = (
+        db.session.query(Interns)
+        .filter_by(user_id=user_id)
+        .join(Internships)
+        .first()
+    )
+
+    if not internship_record:
+        return jsonify({'success': False, 'message': 'No internship found'}), 404
+
+    internship = internship_record.internship
+    hr_profile = internship.hr
+
+    return jsonify({
+        'success': True,
+        'data': {
+            'title': internship.title,
+            'description': internship.description,
+            'duration': internship.duration,
+            'department': internship.department,
+            'stipend': internship.stipend,
+            'completion_status': internship_record.completion_status,
+            'hr_name': hr_profile.fullname if hr_profile else 'N/A'
+        }
+    })
