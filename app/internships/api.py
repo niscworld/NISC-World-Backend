@@ -1,13 +1,13 @@
 from flask import Blueprint, jsonify, request
 from app.models import User, Profile, Interns, InternshipApply, Internships, db
-from app.utils import generate_string, generate_username, send_email_to, get_current_time, verify_dashboard_access
+from app.utils import generate_string, generate_username, send_email_to, get_current_time, verify_dashboard_access, create_internship
 from werkzeug.security import generate_password_hash
 from config import GeneralSettings
 
 
 api = Blueprint("internship_api", __name__)
 
-@api.route('/get-internships', methods=['GET'])
+@api.route('/get-internships', methods=['GET', 'POST'])
 def get_internships():
     try:
         internships = Internships.query.filter_by(is_visible=True).order_by(Internships.posted_on.desc()).all()
@@ -23,6 +23,8 @@ def get_internships():
                 'duration': i.duration,
                 'location': i.location,
                 'stipend': i.stipend,
+                'can_join': i.can_join,
+                'is_visible': i.is_visible,
                 'posted_on': i.posted_on.strftime('%Y-%m-%d') if i.posted_on else None
             })
 
@@ -357,3 +359,81 @@ def view_my_internship():
             'hr_name': hr_profile.fullname if hr_profile else 'N/A'
         }
     })
+
+@api.route('/create-internships', methods=['POST'])
+@verify_dashboard_access
+def createInternship():
+    data = request.get_json()
+
+    title = data.get('title')
+    description = data.get('description')
+    department = data.get('department')
+    duration = data.get('duration')
+    location = data.get('location')
+    stipend = data.get('stipend')
+
+    if not title:
+        return jsonify({'message': 'Title is required'}), 400
+    return create_internship(title=title, description=description, department=department, duration=duration, location=location, stipend=stipend)
+
+
+
+@api.route('/get-internships-details', methods=['POST'])
+def get_internships_details():
+    try:
+        internships = Internships.query.order_by(Internships.posted_on.desc()).all()
+
+        result = []
+        for i in internships:
+            result.append({
+                'id': i.id,
+                'code': i.code,
+                'title': i.title,
+                'description': i.description,
+                'department': i.department,
+                'duration': i.duration,
+                'location': i.location,
+                'stipend': i.stipend,
+                'can_join': i.can_join,
+                'is_visible': i.is_visible,
+                'posted_on': i.posted_on.strftime('%Y-%m-%d') if i.posted_on else None
+            })
+
+        return jsonify(result), 200
+
+    except Exception as e:
+        return jsonify({'message': f'Error fetching internships: {str(e)}'}), 500
+
+
+
+@api.route('/update-internships', methods=['PUT'])
+@verify_dashboard_access
+def update_internship():
+    data = request.get_json()
+
+    internship_code = data.get('code')
+    if not internship_code:
+        return jsonify({'message': 'Internship ID is required.'}), 400
+
+    try:
+        internship = Internships.query.filter_by(code=internship_code).first()
+        if not internship:
+            return jsonify({'message': 'Internship not found.'}), 404
+
+        # ✅ Update only provided fields
+        internship.title = data.get('title', internship.title)
+        internship.description = data.get('description', internship.description)
+        internship.department = data.get('department', internship.department)
+        internship.duration = data.get('duration', internship.duration)
+        internship.location = data.get('location', internship.location)
+        internship.stipend = data.get('stipend', internship.stipend)
+        internship.is_visible = data.get('is_visible', internship.is_visible)
+        internship.can_join = data.get('can_join', internship.can_join)
+
+        db.session.commit()
+
+        return jsonify({'message': 'Internship updated successfully.'}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': f'Error updating internship: {str(e)}'}), 500
