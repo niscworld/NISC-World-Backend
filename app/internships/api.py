@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from app.models import User, Profile, Interns, InternshipApply, Internships, db
+from app.models import User, Profile, Interns, InternshipApply, Internships, db, AppMessages
 from app.utils import generate_string, generate_username, send_email_to, get_current_time, verify_dashboard_access, create_internship
 from werkzeug.security import generate_password_hash
 from config import GeneralSettings
@@ -308,8 +308,8 @@ def view_interns():
     return jsonify(result), 200
 
 
-@api.route('/send-message-to-intern', methods=['POST'])
-def send_message_to_intern():
+@api.route('/send-mail-message-to-intern', methods=['POST'])
+def send_mail_message_to_intern():
     data = request.get_json()
     email = data.get('email')
     subject = data.get('subject', '').strip()
@@ -321,6 +321,36 @@ def send_message_to_intern():
     send_status = send_email_to("Intern", email, subject, body)
 
     return jsonify({'message': '📩 Message sent', 'email_sent': send_status}), 200
+
+@api.route('/send-message-to-intern', methods=['POST'])
+def send_in_app_message_to_intern():
+    data = request.get_json()
+
+    receiver_id = data.get('user_id')  # the intern/user receiving the message
+    sender_id = data.get('sender_id')  # HR or SYSTEM
+    subject = data.get('subject', '').strip()
+    body = data.get('body', '').strip()
+
+    # Validate required fields
+    if not receiver_id or not subject or not body:
+        return jsonify({'message': 'Missing user_id, subject, or body'}), 400
+
+    # Create message instance
+    message = AppMessages(
+        sender_id=sender_id,           # nullable
+        receiver_id=receiver_id,       # required (unless you build system-wide)
+        subject=subject,
+        body=body,
+        sent_on=get_current_time()     # optional if default is defined
+    )
+
+    try:
+        db.session.add(message)
+        db.session.commit()
+        return jsonify({'message': '🟢 In-app message sent', 'message_id': message.id}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': '❌ Failed to send in-app message', 'error': str(e)}), 500
 
 
 
@@ -437,3 +467,37 @@ def update_internship():
     except Exception as e:
         db.session.rollback()
         return jsonify({'message': f'Error updating internship: {str(e)}'}), 500
+
+
+
+
+
+@api.route('/get-intern-messages', methods=['POST'])
+def get_intern_messages():
+    # Get intern_id from the request body
+    data = request.get_json()
+    intern_id = data.get('intern_id')
+
+    if not intern_id:
+        print("No Intern Id")
+        return jsonify({'message': 'Intern ID is required.'}), 400
+
+    # Fetch all messages for the given intern_id
+    messages = AppMessages.query.filter_by(receiver_id=intern_id).all()
+
+    if not messages:
+        return jsonify({'message': 'No messages found.'}), 404
+
+    # Convert messages to JSON format
+    messages_data = []
+    for message in messages:
+        messages_data.append({
+            'id': message.id,
+            'sender_id': message.sender_id,
+            'receiver_id': message.receiver_id,
+            'subject': message.subject,
+            'body': message.body,
+            'sent_on': message.sent_on.isoformat()
+        })
+
+    return jsonify({'messages': messages_data}), 200

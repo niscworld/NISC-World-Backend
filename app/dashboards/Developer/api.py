@@ -42,7 +42,7 @@ def create_user():
             return jsonify({'message': 'Unable to generate username'}), 500
 
         # Check if user_id or email already exists
-        if User.query.get(user_id) or (email and User.query.filter_by(email=email).first()):
+        if User.query.get(user_id):
             return jsonify({'message': 'User ID or Email already exists'}), 409
 
         new_user = User(user_id=user_id, is_active=True)

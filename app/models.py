@@ -166,3 +166,25 @@ class UserNameGenerationSequence(db.Model):
             f"year={self.year} current_users={self.current_users} "
             f"next_user_number={self.next_user_number} total_users={self.total_users}>"
         )
+
+class AppMessages(db.Model):
+    __tablename__ = 'AppMessages'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    sender_id = db.Column(db.String(64))
+    # , db.ForeignKey('users.user_id'), index=True, nullable=True)
+    receiver_id = db.Column(db.String(64))
+    # , db.ForeignKey('users.user_id'), index=True, nullable=True)
+
+    subject = db.Column(db.Text, nullable=False)
+    body = db.Column(db.Text, nullable=False)
+
+    sent_on = db.Column(db.DateTime, default=get_current_time, nullable=False)
+
+    # Correct relationships
+    # sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_messages')
+    # receiver = db.relationship('User', foreign_keys=[receiver_id], backref='received_messages')
+
+    def __repr__(self):
+        return f"<AppMessage id={self.id} from={self.sender_id} to={self.receiver_id}>"
