@@ -1,6 +1,8 @@
 from flask import Blueprint, jsonify, request
 from app.models import db, Internships, InternshipApply
 from app.util_wraps import verify_dashboard_access
+from app.utils import send_email_to
+from config import GeneralSettings
 
 api = Blueprint("api", __name__)
 
@@ -44,3 +46,31 @@ def view_applicants(code):
         })
     print(out)
     return jsonify({'applicants': out}), 200
+
+@api.route("/send-message-to-applicant", methods=['POST'])
+@verify_dashboard_access
+def send_message_to_applicant():
+    data = request.get_json()
+    email = data.get('email')
+    internship_code = data.get('internship_code')
+    message = data.get('message')
+    applicant = InternshipApply.query.filter_by(internship_code=internship_code, email=email).first()
+    internship = Internships.query.filter_by(code=internship_code).first()
+    subject = "📩 Internship Application Update !!"
+    body = f"""
+Dear Applicant,
+
+{message}
+
+From
+HR
+NISC
+
+{GeneralSettings.MAIL_END_NOTE}
+
+"""
+    send_status = send_email_to("Applicant", email, subject, body)
+    return jsonify({
+        'message': '❌ Applicant rejected and application removed',
+        'email_sent': send_status
+    }), 200
