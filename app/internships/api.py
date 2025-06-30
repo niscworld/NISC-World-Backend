@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from app.models import User, Profile, Interns, InternshipApply, Internships, db, AppMessages
+from app.models import User, Profile, Interns, InternshipApply, Internships, db, AppMessages, InternFinalAssignment
 from app.utils import generate_string, generate_username, send_email_to, get_current_time, verify_dashboard_access, create_internship
 from werkzeug.security import generate_password_hash
 from config import GeneralSettings
@@ -485,11 +485,12 @@ def get_intern_messages():
     # Fetch all messages for the given intern_id
     messages = AppMessages.query.filter_by(receiver_id=intern_id).all()
 
-    if not messages:
-        return jsonify({'message': 'No messages found.'}), 404
-
     # Convert messages to JSON format
     messages_data = []
+
+    if not messages:
+        return jsonify({'messages': messages_data}), 200
+
     for message in messages:
         messages_data.append({
             'id': message.id,
@@ -501,3 +502,43 @@ def get_intern_messages():
         })
 
     return jsonify({'messages': messages_data}), 200
+
+
+
+
+
+@api.route('/intern-submit-assignment', methods=['POST'])
+def submit_assignment():
+    data = request.get_json()
+
+    user_id = data.get('user_id')
+    action = data.get('action')  # Optional flag to distinguish check vs submit
+
+    # TODO: Verify token, validate user, etc.
+
+    # 1. If just checking submission status
+    if action == 'check':
+        existing = InternFinalAssignment.query.filter_by(user_id=user_id).first()
+        return jsonify({
+            'submitted': bool(existing),
+            'url': existing.assignment_url if existing else ''
+        }), 200
+
+    url = data.get('url')
+    # 2. Submit new assignment
+    if not user_id or not url:
+        return jsonify({'success': False, 'message': 'Missing user_id or url'}), 400
+
+    existing = InternFinalAssignment.query.filter_by(user_id=user_id).first()
+    if existing:
+        return jsonify({'success': False, 'message': 'Assignment already submitted'}), 409
+
+    new_submission = InternFinalAssignment(
+        user_id=user_id,
+        assignment_url=url
+    )
+
+    db.session.add(new_submission)
+    db.session.commit()
+
+    return jsonify({'success': True, 'message': 'Assignment submitted successfully'}), 200

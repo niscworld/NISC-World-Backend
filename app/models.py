@@ -188,3 +188,16 @@ class AppMessages(db.Model):
 
     def __repr__(self):
         return f"<AppMessage id={self.id} from={self.sender_id} to={self.receiver_id}>"
+
+
+class InternFinalAssignment(db.Model):
+    __tablename__ = 'intern_final_assignment'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    user_id = db.Column(db.String(64), nullable=False, unique=True)
+    assignment_url = db.Column(db.String(512), nullable=False)
+    submitted_on = db.Column(db.DateTime, default=get_current_time, nullable=False)
+
+    def __repr__(self):
+        return f"<InternFinalAssignment user_id={self.user_id} submitted_on={self.submitted_on}>"
