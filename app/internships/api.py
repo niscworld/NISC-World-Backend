@@ -58,6 +58,19 @@ def apply_internship():
     if existing_application:
         return jsonify({'message': 'You have already applied for this internship.'}), 409
 
+    existing_email = Profile.query.filter_by(
+        email=email
+    ).all()
+
+    if existing_email:
+        for row in existing_email:
+            uid = row.user_id
+            intern = Interns.query.filter_by(user_id=uid, internship_code=internship_code).first()
+            if intern:
+                return jsonify({'message': 'You are already an intern in this Internship.'}), 409
+            pass
+        pass
+
     # ✅ Check internship existence and if applications are open
     internship = Internships.query.filter_by(code=internship_code).first()
     if not internship:
