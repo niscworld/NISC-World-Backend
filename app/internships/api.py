@@ -1,8 +1,12 @@
 from flask import Blueprint, jsonify, request
 from app.models import User, Profile, Interns, InternshipApply, Internships, db, AppMessages, InternFinalAssignment
-from app.utils import generate_string, generate_username, send_email_to, get_current_time, verify_dashboard_access, create_internship
+from app.utils import generate_string, generate_username, send_email_to, get_current_time, verify_dashboard_access, create_internship, send_email_with_attachment
 from werkzeug.security import generate_password_hash
+from werkzeug.utils import secure_filename
+from datetime import datetime
 from config import GeneralSettings
+import tempfile
+import os
 
 
 api = Blueprint("internship_api", __name__)
@@ -656,3 +660,132 @@ def rejectFinalAssignment():
     return jsonify({'success': False, 'message': 'Assignment Rejected'}), 200
 
 
+
+
+
+
+@api.route('/get-offer-letter-details/<string:intern_id>', methods=['GET'])
+def get_offer_letter_details(intern_id):
+    """Fetch intern details for offer letter generation"""
+    # intern_id = request.args.get('intern_id')
+    print("FETCHING OFFER LETTER DETAILS")
+    if not intern_id:
+        return jsonify({'error': 'Intern ID is required'}), 400
+
+    try:
+        # Get intern record
+        intern = Interns.query.filter_by(user_id=intern_id).first()
+        if not intern:
+            return jsonify({'error': 'Intern not found'}), 404
+
+        # Get intern profile
+        print("FETCHING OFFER LETTER DETAILS")
+        profile = Profile.query.filter_by(user_id=intern.user_id).first()
+        print(profile)
+        if not profile:
+            return jsonify({'error': 'Profile not found'}), 404
+
+        print("FETCHING OFFER LETTER DETAILS")
+        # Get internship details
+        internship = Internships.query.filter_by(code=intern.internship_code).first()
+        if not internship:
+            return jsonify({'error': 'Internship not found'}), 404
+        print(internship)
+
+        # Get HR details
+        hr_profile = Profile.query.filter_by(user_id='NW25A0007').first()
+        if not hr_profile:
+            return jsonify({'error': 'HR profile not found'}), 404
+
+        response_data = {
+            'intern_id': intern.id,
+            'fullname': profile.fullname,
+            'email': profile.email,
+            'internship_title': internship.title,
+            'stipend': internship.stipend,
+            'location': internship.location,
+            'duration': internship.duration,
+            'hr_id': hr_profile.user_id,
+            'hr_name': hr_profile.fullname
+        }
+
+        return jsonify(response_data), 200
+
+    except Exception as e:
+        print(f"Error fetching offer letter details: {str(e)}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@api.route('/send-offer-letter', methods=['POST'])
+def send_offer_letter():
+    """Send offer letter via email"""
+    if 'pdf_file' not in request.files or 'intern_id' not in request.form:
+        print("Missing files or intern_id in request")  # Debug log
+        print(f"Request files: {request.files}")  # Debug log
+        print(f"Request form: {request.form}")  # Debug log
+        return jsonify({'error': 'Missing required fields (pdf_file and intern_id)'}), 400
+
+    try:
+        intern_id = request.form['intern_id']
+        pdf_file = request.files['pdf_file']
+
+        # Debug logs
+        print(f"Processing intern_id: {intern_id}")
+        print(f"PDF file received: {pdf_file.filename}")
+
+        # Get intern details
+        intern = Interns.query.filter_by(user_id=intern_id).first()
+        if not intern:
+            print(f"Intern not found: {intern_id}")
+            return jsonify({'error': 'Intern not found'}), 404
+
+        profile = Profile.query.filter_by(user_id=intern.user_id).first()
+        if not profile:
+            print(f"Profile not found for user_id: {intern.user_id}")
+            return jsonify({'error': 'Profile not found'}), 404
+
+        # Create temp directory if not exists
+        temp_dir = os.path.join(tempfile.gettempdir(), 'nisc_offer_letters')
+        os.makedirs(temp_dir, exist_ok=True)
+
+        # Save the PDF temporarily
+        filename = secure_filename(f"offer_letter_{intern_id}.pdf")
+        temp_path = os.path.join(temp_dir, filename)
+        pdf_file.save(temp_path)
+        print(f"PDF saved temporarily at: {temp_path}")
+
+        # Email details
+        subject = "NISC Internship Offer Letter"
+        body = f"""Dear {profile.fullname},
+
+Please find attached your internship offer letter from NISC.
+
+Regards,
+NISC HR Team
+"""
+
+        # Send email
+        if not send_email_with_attachment(
+            to_email=profile.email,
+            subject=subject,
+            body=body,
+            attachment_path=temp_path,
+            filename=filename
+        ):
+            raise Exception("Failed to send email")
+
+        # Clean up
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+            print("Temporary file removed")
+
+        return jsonify({
+            'message': 'Offer letter sent successfully',
+            'to_email': profile.email,
+            'intern_name': profile.fullname
+        }), 200
+
+    except Exception as e:
+        print(f"Error in send_offer_letter: {str(e)}")
+        if 'temp_path' in locals() and os.path.exists(temp_path):
+            os.remove(temp_path)
+        return jsonify({'error': f'Failed to send offer letter: {str(e)}'}), 500
