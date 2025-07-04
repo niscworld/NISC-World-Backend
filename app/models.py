@@ -198,6 +198,9 @@ class InternFinalAssignment(db.Model):
     user_id = db.Column(db.String(64), nullable=False, unique=True)
     assignment_url = db.Column(db.String(512), nullable=False)
     submitted_on = db.Column(db.DateTime, default=get_current_time, nullable=False)
+    grade = db.Column(db.Integer, nullable=True, default=None)
+    message = db.Column(db.Text, nullable=True, default=None)
+    isExcellence = db.Column(db.Boolean, default=False)
 
     def __repr__(self):
         return f"<InternFinalAssignment user_id={self.user_id} submitted_on={self.submitted_on}>"

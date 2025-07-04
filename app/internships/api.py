@@ -320,6 +320,44 @@ def view_interns():
 
     return jsonify(result), 200
 
+@api.route('/view-interns-submissions', methods=['GET', 'POST'])
+@verify_dashboard_access
+def view_interns_submissions():
+    internship_code = None
+
+    if request.method == 'POST':
+        data = request.get_json()
+        internship_code = data.get('internship_code')
+
+    query = (
+        db.session.query(Interns, Profile, Internships, InternFinalAssignment)
+        .join(Profile, Profile.user_id == Interns.user_id)
+        .join(Internships, Internships.code == Interns.internship_code)
+        .outerjoin(InternFinalAssignment, InternFinalAssignment.user_id == Interns.user_id)
+    )
+
+    if internship_code:
+        query = query.filter(Interns.internship_code == internship_code)
+
+    interns = query.all()
+
+    result = []
+    for intern, profile, internship, final_assignment in interns:
+        if final_assignment and final_assignment.grade:
+            continue
+        result.append({
+            'user_id': intern.user_id,
+            'fullname': profile.fullname,
+            'email': profile.email,
+            'internship_title': internship.title,
+            'internship_code': internship.code,
+            'completion_status': intern.completion_status,
+            'assignment_url': final_assignment.assignment_url if final_assignment else None,
+            'submitted_on': final_assignment.submitted_on.isoformat() if final_assignment else None,
+        })
+
+    return jsonify(result), 200
+
 
 @api.route('/send-mail-message-to-intern', methods=['POST'])
 def send_mail_message_to_intern():
@@ -534,7 +572,9 @@ def submit_assignment():
         existing = InternFinalAssignment.query.filter_by(user_id=user_id).first()
         return jsonify({
             'submitted': bool(existing),
-            'url': existing.assignment_url if existing else ''
+            'url': existing.assignment_url if existing else '',
+            'grade': existing.grade if existing and existing.grade else 0,
+            'remarks': existing.message if existing and existing.message else 'No Remarks',
         }), 200
 
     url = data.get('url')
@@ -555,3 +595,64 @@ def submit_assignment():
     db.session.commit()
 
     return jsonify({'success': True, 'message': 'Assignment submitted successfully'}), 200
+
+
+@api.route('/accept-final-assignment', methods=["POST", "GET"])
+def acceptFinalAssignment():
+    data = request.get_json()
+    intern_id = data.get('intern_id')
+    internship_code = data.get('internship_code')
+    isExcellence = data.get('isExcellence')
+    grade = data.get('grade')
+    message = data.get('message')
+    intern = InternFinalAssignment.query.filter_by(user_id=intern_id).first()
+    if not intern:
+        return jsonify({'success': False, 'message': 'Assignment Not Found'}), 409
+    intern.grade = int(grade)
+    intern.message = message
+    intern.isExcellence = isExcellence
+    db.session.commit()
+    return jsonify({'success': False, 'message': 'Assignment Graded'}), 200
+
+
+@api.route('/reject-final-assignment', methods=["POST", "GET"])
+def rejectFinalAssignment():
+    data = request.get_json()
+    intern_id = data.get('intern_id')
+    internship_code = data.get('internship_code')
+    message = data.get('message')
+    print(intern_id)
+    intern = InternFinalAssignment.query.filter_by(user_id=intern_id).first()
+    if not intern:
+        return jsonify({'success': False, 'message': 'Assignment Not Found'}), 409
+
+    data = request.get_json()
+
+    receiver_id = intern_id
+    sender_id = data.get('user_id')  # HR or SYSTEM
+    subject = "Internshpi Final Assignment Not Accepted"
+    body = message
+
+    # Validate required fields
+    if not receiver_id or not subject or not body:
+        return jsonify({'message': 'Missing user_id, subject, or body'}), 400
+
+    # Create message instance
+    message = AppMessages(
+        sender_id=sender_id,           # nullable
+        receiver_id=receiver_id,       # required (unless you build system-wide)
+        subject=subject,
+        body=body,
+        sent_on=get_current_time()     # optional if default is defined
+    )
+
+    try:
+        db.session.delete(intern)
+        db.session.add(message)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': '❌ Failed to send in-app message', 'error': str(e)}), 500
+    return jsonify({'success': False, 'message': 'Assignment Rejected'}), 200
+
+
