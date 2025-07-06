@@ -481,6 +481,7 @@ def get_internships_details():
                 'stipend': i.stipend,
                 'can_join': i.can_join,
                 'is_visible': i.is_visible,
+                'hr_profile_id': i.hr_profile_id,  # Added hr_profile_id
                 'posted_on': i.posted_on.strftime('%Y-%m-%d') if i.posted_on else None
             })
 
@@ -514,6 +515,11 @@ def update_internship():
         internship.stipend = data.get('stipend', internship.stipend)
         internship.is_visible = data.get('is_visible', internship.is_visible)
         internship.can_join = data.get('can_join', internship.can_join)
+
+        # Update hr_profile_id (if provided)
+        hr_profile_id = data.get('hr_profile_id')
+        if hr_profile_id:
+            internship.hr_profile_id = hr_profile_id
 
         db.session.commit()
 
@@ -693,7 +699,7 @@ def get_offer_letter_details(intern_id):
         print(internship)
 
         # Get HR details
-        hr_profile = Profile.query.filter_by(user_id='NW25A0007').first()
+        hr_profile = Profile.query.filter_by(user_id=internship.hr_profile_id).first()
         if not hr_profile:
             return jsonify({'error': 'HR profile not found'}), 404
 
