@@ -2,9 +2,10 @@
 from flask import jsonify
 from app import db
 import jwt
-from app.models import User, Session, Profile, Internships, MFAVerification
+from app.models import User, Session, Profile, Internships, MFAVerification, CompletedInterns, CompletedInternships, InternshipApply, Interns, InternFinalAssignment
 from config import Config, GeneralSettings
 from app.util_functions import get_current_time, get_add_delta_to_current_time_for_session  # to avoid circular import
+from app.util_mail import send_internship_completion_email
 
 def find_user_by_id(user_id):
     print(f"Checking.. user presence... {user_id}")
@@ -141,3 +142,132 @@ def create_internship(title, description, department, duration, location, stipen
     except Exception as e:
         db.session.rollback()
         return jsonify({'message': f'Error creating internship: {str(e)}'}), 500
+
+# This Function Will Close Internship by doing the following:
+# All The Interns from interns table will be removed and will be added completedinterns table
+# All The Applicants from internship_apply table will be removed
+# Internship will be removed and added to completedinternships table
+def close_internship(internship_code):
+    internship = Internships.query.filter_by(code=internship_code).first()
+    print(f"Closing internship: {internship_code}")
+    if not internship:
+        print(f"Internship not found: {internship_code}")
+        return jsonify({'message': 'Internship not found'}), 404
+
+    # Move all interns to CompletedInterns
+    print(f"Moving interns for internship: {internship_code}")
+    interns = Interns.query.filter_by(internship_code=internship_code).all()
+    mails = []
+    for intern in interns:
+        # for each of the intern get the detiasil from User table and Profile Table
+        user = User.query.filter_by(user_id=intern.user_id).first()
+        profile = Profile.query.filter_by(user_id=intern.user_id).first()
+        submission = InternFinalAssignment.query.filter_by(user_id=intern.user_id).first()
+        print(f"Moving intern: {intern.user_id} for internship: {internship_code}")
+        completed_intern = CompletedInterns(
+            user_id=intern.user_id,
+            internship_code=internship_code,
+            completion_status="Completed",
+            full_name=profile.fullname,  # Assuming full_name is available in Interns model
+            excellence = submission.isExcellence if submission else False  # Assuming excellence is a boolean field
+        )
+        mails.append( profile.email )
+        print(f"Adding completed intern: {completed_intern.user_id} for internship: {internship_code}")
+        db.session.add(completed_intern)
+        db.session.flush()  # Flush to ensure intern is removed before next iteration
+        print(f"Deleting intern: {intern.user_id} for internship: {internship_code}")
+        db.session.delete(intern)
+        db.session.flush()  # Flush to ensure intern is removed before next iteration
+        print(f"Deleting profile for user: {user.user_id} for internship: {internship_code}")
+        db.session.delete(profile)
+        db.session.flush()  # Flush to ensure intern is removed before next iteration
+        sessions = Session.query.filter_by(user_id=user.user_id).all()
+        for session in sessions:
+            print(f"Deleting session for user: {user.user_id} for internship: {internship_code}")
+            db.session.delete(session)
+            db.session.flush()
+        print(f"Deleting user: {user.user_id} for internship: {internship_code}")
+        db.session.delete(user)
+        db.session.flush()  # Flush to ensure intern is removed before next iteration
+        print(f"Deleting submission for user: {intern.user_id} for internship: {internship_code}")
+        db.session.delete(submission) if submission else None  # Delete submission if it exists
+        db.session.flush()  # Flush to ensure intern is removed before next iteration
+        print(f"Completed intern added: {completed_intern.user_id} for internship: {internship_code}")
+    print(f"Removed {len(interns)} interns from internship: {internship_code}")
+
+    # Remove all applicants
+    print(f"Removing applicants for internship: {internship_code}")
+    InternshipApply.query.filter_by(internship_code=internship_code).delete()
+    print(f"Removed applicants for internship: {internship_code}")
+
+    # Move internship to CompletedInternships
+    print(f"Moving internship to completed internships: {internship_code}")
+    completed_internship = CompletedInternships(
+        internship_code=internship.code,
+        title=internship.title,
+        description=internship.description,
+        department=internship.department,
+        duration=internship.duration,
+        location=internship.location,
+        stipend=internship.stipend,
+        posted_on=internship.posted_on,
+        hr_profile_id=internship.hr_profile_id
+    )
+    db.session.add(completed_internship)
+    db.session.delete(internship)
+    print(f"Removed internship: {internship_code}")
+
+    db.session.commit()
+
+    # Send mail to all the interns that the internship is closed
+    # Details of the mail has to be: Internship Title, Internship Duration Only
+    send_internship_completion_email(mails, internship.title, internship.duration)
+
+
+    return jsonify({'message': 'Internship closed successfully'}), 200
+
+# Create a function that will return the details of the completed intern it will take the intern id as parameter also with the internship that he completed
+def get_completed_intern_details(intern_id):
+    completed_intern = CompletedInterns.query.filter_by(user_id=intern_id).first()
+    if not completed_intern:
+        print(f"Completed intern not found: {intern_id}\n\n\n")
+        return jsonify({'message': 'Intern not found'}), 404
+    
+    internship_code = completed_intern.internship_code
+    if not internship_code:
+        return jsonify({'message': 'Internship code not found for this intern'}), 404
+
+    internship = CompletedInternships.query.filter_by(internship_code=internship_code).first()
+    if not internship:
+        return jsonify({'message': 'Internship not found'}), 404
+    
+    # hr details also add
+    hr_profile = Profile.query.filter_by(user_id=internship.hr_profile_id).first() if internship.hr_profile_id else None
+    hr_details = {
+        'hr_profile_id': internship.hr_profile_id,
+        'hr_name': hr_profile.name if hr_profile else "N/A",
+        'hr_email': hr_profile.email if hr_profile else "N/A"
+    }
+
+    print(f"Returning details for completed intern: {completed_intern.user_id} for internship: {internship_code}")
+    print("Is Excellence:", completed_intern.excellence)
+    print("\n\n\n\n\n\n")
+
+    return jsonify({
+        'intern_id': completed_intern.id,
+        'user_id': completed_intern.user_id,
+        'full_name': completed_intern.full_name,
+        'excellence': completed_intern.excellence,
+        'internship_code': completed_intern.internship_code,
+        'completion_status': completed_intern.completion_status,
+        'internship_details': {
+            'title': internship.title,
+            'description': internship.description,
+            'department': internship.department,
+            'duration': internship.duration,
+            'location': internship.location,
+            'stipend': internship.stipend,
+            'hr_details': hr_details,
+            'posted_on': internship.posted_on if internship.posted_on else None
+        }
+    }), 200

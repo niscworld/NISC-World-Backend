@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
 from app.models import User, Profile, Interns, InternshipApply, Internships, db, AppMessages, InternFinalAssignment
-from app.utils import generate_string, generate_username, send_email_to, get_current_time, verify_dashboard_access, create_internship, send_email_with_attachment
+from app.utils import generate_string, generate_username, send_email_to, get_current_time, verify_dashboard_access, create_internship, send_email_with_attachment, get_completed_intern_details
 from werkzeug.security import generate_password_hash
 from werkzeug.utils import secure_filename
 from datetime import datetime
@@ -37,8 +37,9 @@ def get_internships():
     except Exception as e:
         return jsonify({'message': f'Error fetching internships: {str(e)}'}), 500
 
-
-
+@api.route('/verify-internship/<string:intern_id>', methods=['GET', 'POST'])
+def verify_internship(intern_id):
+    return get_completed_intern_details(intern_id)
 
 @api.route('/apply-internship', methods=['POST'])
 def apply_internship():
@@ -578,21 +579,24 @@ def submit_assignment():
     # TODO: Verify token, validate user, etc.
 
     # 1. If just checking submission status
+    print("Checking submission status")
     if action == 'check':
         existing = InternFinalAssignment.query.filter_by(user_id=user_id).first()
         return jsonify({
             'submitted': bool(existing),
             'url': existing.assignment_url if existing else '',
-            'grade': existing.grade if existing and existing.grade else 0,
+            'grade': existing.grade if existing and existing.grade else None,
             'remarks': existing.message if existing and existing.message else 'No Remarks',
         }), 200
 
     url = data.get('url')
     # 2. Submit new assignment
+    print("Submitting assignment")
     if not user_id or not url:
         return jsonify({'success': False, 'message': 'Missing user_id or url'}), 400
 
     existing = InternFinalAssignment.query.filter_by(user_id=user_id).first()
+    print("Checking if assignment already exists")
     if existing:
         return jsonify({'success': False, 'message': 'Assignment already submitted'}), 409
 
@@ -603,6 +607,7 @@ def submit_assignment():
 
     db.session.add(new_submission)
     db.session.commit()
+    print("Assignment submitted successfully")
 
     return jsonify({'success': True, 'message': 'Assignment submitted successfully'}), 200
 

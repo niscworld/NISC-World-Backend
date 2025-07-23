@@ -3,6 +3,7 @@ import os
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
+import threading
 
 from config import GeneralSettings
 
@@ -139,3 +140,36 @@ def send_email_with_attachment(to_email, subject, body, attachment_path, filenam
     except Exception as e:
         print(f"[MAIL ERROR] Unexpected error: {str(e)}")
         return False
+
+# create a function to send email to all interns who have completed their internship
+# parameters will be internship title, internship duration, and mails [list]
+def send_internship_completion_email(mails, internship_title, internship_duration):
+    message_body = f"""
+Dear Intern,
+We are pleased to inform you that the internship titled "{internship_title}" has been successfully completed.
+Your contributions during the period of {internship_duration} is greatly appreciated.
+
+We encourage you to keep in touch and stay connected with us for future opportunities.
+
+You can check your internship status at https://www.nisc.co.in/internships/verify
+
+!! Note !!
+Your Profile will be moved to Completed Interns section, and you will not be able to login to the NISC Portal after this.
+New Id will be created for new internship.
+
+Thank you for your hard work and dedication.
+Best regards,
+NISC Team
+"""
+
+    subject = f"Internship Completion: {internship_title}"
+
+    # create a thread for each email to be sent
+    threads = []
+    print(f"Sending internship completion email to {len(mails)} interns")
+    for email in mails:
+        thread = threading.Thread(target=send_email_to, args=(email, email, subject, message_body))
+        threads.append(thread)
+        thread.start()
+
+    pass

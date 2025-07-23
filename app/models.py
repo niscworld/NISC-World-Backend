@@ -204,3 +204,48 @@ class InternFinalAssignment(db.Model):
 
     def __repr__(self):
         return f"<InternFinalAssignment user_id={self.user_id} submitted_on={self.submitted_on}>"
+
+
+# This Class Will Only Have The Internship Details Not The Intern Details and No Way Related To Internship Table Also
+class CompletedInternships(db.Model):
+    __tablename__ = 'completed_internships'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    internship_code = db.Column(db.String(64), nullable=False, unique=True)
+    title = db.Column(db.String(150), nullable=False)
+    description = db.Column(db.Text)
+    department = db.Column(db.String(100))
+    duration = db.Column(db.String(50))
+    location = db.Column(db.String(100))
+    stipend = db.Column(db.String(50))
+    posted_on = db.Column(db.DateTime, default=get_current_time)
+    is_visible = db.Column(db.Boolean, default=True)
+
+    hr_profile_id = db.Column(db.String(64), db.ForeignKey('profiles.user_id'), nullable=True)
+    hr = db.relationship('Profile', backref='completed_internships', foreign_keys=[hr_profile_id])
+
+
+class CompletedInterns(db.Model):
+    __tablename__ = 'completed_interns'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    user_id = db.Column(db.String(64), nullable=False)
+    full_name = db.Column(db.String(120), nullable=False)  # Added for clarity
+    excellence = db.Column(db.Boolean, default=False)  # Added for excellence status
+
+    # Add the missing foreign key reference here
+    internship_code = db.Column(
+        db.String(64),
+        db.ForeignKey('completed_internships.internship_code'),  # Correct FK added
+        nullable=False
+    )
+
+    completion_status = db.Column(db.String(50), default='completed')  # e.g., 'completed', 'dropped'
+
+    # Relationship to CompletedInternships now works correctly
+    internship = db.relationship('CompletedInternships', backref='interns_completed')
+
+    def __repr__(self):
+        return f"<CompletedIntern user_id={self.user_id} internship_code={self.internship_code} status={self.completion_status}>"
