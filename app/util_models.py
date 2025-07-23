@@ -247,7 +247,7 @@ def get_completed_intern_details(intern_id):
     hr_profile = Profile.query.filter_by(user_id=internship.hr_profile_id).first() if internship.hr_profile_id else None
     hr_details = {
         'hr_profile_id': internship.hr_profile_id,
-        'hr_name': hr_profile.name if hr_profile else "N/A",
+        'hr_name': hr_profile.fullname if hr_profile else "N/A",
         'hr_email': hr_profile.email if hr_profile else "N/A"
     }
 
