@@ -144,14 +144,24 @@ def send_email_with_attachment(to_email, subject, body, attachment_path, filenam
 # create a function to send email to all interns who have completed their internship
 # parameters will be internship title, internship duration, and mails [list]
 def send_internship_completion_email(mails, internship_title, internship_duration):
-    message_body = f"""
-Dear Intern,
+
+    subject = f"Internship Completion: {internship_title}"
+
+    # create a thread for each email to be sent
+    threads = []
+    print(f"Sending internship completion email to {len(mails)} interns")
+    for email in mails:
+        intern_id = email[0]
+        mail = email[1]
+        name = email[2] if len(email) > 2 else "Intern"
+        message_body = f"""
+Dear {name},
 We are pleased to inform you that the internship titled "{internship_title}" has been successfully completed.
 Your contributions during the period of {internship_duration} is greatly appreciated.
 
 We encourage you to keep in touch and stay connected with us for future opportunities.
 
-You can check your internship status at https://www.nisc.co.in/internships/verify
+You can check your internship status at https://www.nisc.co.in/internship/verify/{intern_id}
 
 !! Note !!
 Your Profile will be moved to Completed Interns section, and you will not be able to login to the NISC Portal after this.
@@ -161,14 +171,8 @@ Thank you for your hard work and dedication.
 Best regards,
 NISC Team
 """
-
-    subject = f"Internship Completion: {internship_title}"
-
-    # create a thread for each email to be sent
-    threads = []
-    print(f"Sending internship completion email to {len(mails)} interns")
-    for email in mails:
-        thread = threading.Thread(target=send_email_to, args=(email, email, subject, message_body))
+        print(f"Sending email to {mail} for intern id {intern_id}")
+        thread = threading.Thread(target=send_email_to, args=(name, mail, subject, message_body))
         threads.append(thread)
         thread.start()
 

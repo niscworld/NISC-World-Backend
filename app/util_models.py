@@ -171,7 +171,7 @@ def close_internship(internship_code):
             full_name=profile.fullname,  # Assuming full_name is available in Interns model
             excellence = submission.isExcellence if submission else False  # Assuming excellence is a boolean field
         )
-        mails.append( profile.email )
+        mails.append( (completed_intern.user_id, profile.email, completed_intern.full_name) )
         print(f"Adding completed intern: {completed_intern.user_id} for internship: {internship_code}")
         db.session.add(completed_intern)
         db.session.flush()  # Flush to ensure intern is removed before next iteration
