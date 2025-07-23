@@ -208,6 +208,7 @@ class InternFinalAssignment(db.Model):
 
 # This Class Will Only Have The Internship Details Not The Intern Details and No Way Related To Internship Table Also
 class CompletedInternships(db.Model):
+
     __tablename__ = 'completed_internships'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -227,6 +228,7 @@ class CompletedInternships(db.Model):
 
 
 class CompletedInterns(db.Model):
+    
     __tablename__ = 'completed_interns'
 
     id = db.Column(db.Integer, primary_key=True)
