@@ -154,6 +154,22 @@ def close_internship(internship_code):
         print(f"Internship not found: {internship_code}")
         return jsonify({'message': 'Internship not found'}), 404
 
+    # Move internship to CompletedInternships
+    print(f"Moving internship to completed internships: {internship_code}")
+    completed_internship = CompletedInternships(
+        internship_code=internship.code,
+        title=internship.title,
+        description=internship.description,
+        department=internship.department,
+        duration=internship.duration,
+        location=internship.location,
+        stipend=internship.stipend,
+        posted_on=internship.posted_on,
+        hr_profile_id=internship.hr_profile_id
+    )
+    db.session.add(completed_internship)
+    db.session.flush()  # Flush to ensure internship is moved before next operations
+
     # Move all interns to CompletedInterns
     print(f"Moving interns for internship: {internship_code}")
     interns = Interns.query.filter_by(internship_code=internship_code).all()
@@ -200,20 +216,6 @@ def close_internship(internship_code):
     InternshipApply.query.filter_by(internship_code=internship_code).delete()
     print(f"Removed applicants for internship: {internship_code}")
 
-    # Move internship to CompletedInternships
-    print(f"Moving internship to completed internships: {internship_code}")
-    completed_internship = CompletedInternships(
-        internship_code=internship.code,
-        title=internship.title,
-        description=internship.description,
-        department=internship.department,
-        duration=internship.duration,
-        location=internship.location,
-        stipend=internship.stipend,
-        posted_on=internship.posted_on,
-        hr_profile_id=internship.hr_profile_id
-    )
-    db.session.add(completed_internship)
     db.session.delete(internship)
     print(f"Removed internship: {internship_code}")
 
